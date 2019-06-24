@@ -7,6 +7,7 @@ import Button from "@material-ui/core/Button";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import Typography from "@material-ui/core/Typography";
+import Checkbox from "@material-ui/core/Checkbox";
 import { TextField } from "../../shared/FormFields";
 
 const useStyles = makeStyles({
@@ -37,8 +38,8 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
     const handleSubmit = async event => {
         event.preventDefault();
         saveToDoList(toDoList.id, { todos });
-        // POST new todos to list on server given by id
-        const response = await fetch("/addLists/:id", {
+        // PUT new todos to list on server given by id
+        const response = await fetch("/lists/update", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -47,7 +48,6 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
             })
         });
         const body = await response.text();
-
         console.log(body);
     };
 
@@ -58,8 +58,27 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
                     {toDoList.title}
                 </Typography>
                 <form onSubmit={handleSubmit} className={classes.form}>
-                    {todos.map((name, index) => (
+                    {todos.map((todo, index) => (
                         <div key={index} className={classes.todoLine}>
+                            <Checkbox
+                                checked={todo.checked}
+                                onChange={event => {
+                                    setTodos([
+                                        // immutable update
+                                        ...todos.slice(0, index),
+                                        {
+                                            name: todo.name,
+                                            checked: event.target.checked
+                                        },
+                                        ...todos.slice(index + 1)
+                                    ]);
+                                }}
+                                value="check"
+                                color="primary"
+                                inputProps={{
+                                    "aria-label": "primary checkbox"
+                                }}
+                            />
                             <Typography
                                 className={classes.standardSpace}
                                 variant="title"
@@ -68,15 +87,23 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
                             </Typography>
                             <TextField
                                 label="What to do?"
-                                value={name}
+                                value={todo.name}
                                 onChange={event => {
                                     setTodos([
                                         // immutable update
                                         ...todos.slice(0, index),
-                                        event.target.value,
+                                        {
+                                            name: event.target.value,
+                                            checked: todo.checked
+                                        },
                                         ...todos.slice(index + 1)
                                     ]);
                                 }}
+                                // style={{
+                                //     textDecoration: todo.checked
+                                //         ? "line-through"
+                                //         : "none"
+                                // }}
                                 className={classes.textField}
                             />
                             <Button
@@ -100,7 +127,10 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
                             type="button"
                             color="primary"
                             onClick={() => {
-                                setTodos([...todos, ""]);
+                                setTodos([
+                                    ...todos,
+                                    { name: "", checked: false }
+                                ]);
                             }}
                         >
                             Add Todo <AddIcon />

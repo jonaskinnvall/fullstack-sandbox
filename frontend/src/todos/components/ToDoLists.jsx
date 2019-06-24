@@ -35,7 +35,7 @@ const fetchLists = async () => {
     const body = await response.json();
 
     // if (body.status !== 200) throw Error(body.message);
-    // console.log(body);
+    console.log(body);
     return body;
 };
 
