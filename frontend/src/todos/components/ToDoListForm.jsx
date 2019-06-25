@@ -20,6 +20,11 @@ const useStyles = makeStyles({
     },
     textField: {
         flexGrow: 1
+
+        /** Tried to change textDecoration depending on checkboxes */
+        // textDecoration: toDoList.todos.indexOf(x => x.checked)
+        //     ? "line-through"
+        //     : "none"
     },
     standardSpace: {
         margin: "8px"
@@ -30,15 +35,19 @@ const useStyles = makeStyles({
         flexGrow: 1
     }
 });
+// Variable to use for autosave functionality
+// let waitSave = 0;
 
 export const ToDoListForm = ({ toDoList, saveToDoList }) => {
     const classes = useStyles();
     const [todos, setTodos] = useState(toDoList.todos);
 
-    const handleSubmit = async event => {
-        event.preventDefault();
-        saveToDoList(toDoList.id, { todos });
-        // PUT new todos to list on server given by id
+    const updateLists = async () => {
+        /** Tried to saveToDoList in here before PUT to make the autosave work on time
+         * Also clear waitSave */
+        // saveToDoList(toDoList.id, { todos });
+        // if (waitSave) clearTimeout(waitSave);
+
         const response = await fetch("/lists/update", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -51,11 +60,23 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
         console.log(body);
     };
 
+    const handleSubmit = event => {
+        event.preventDefault();
+
+        saveToDoList(toDoList.id, { todos });
+
+        // PUT new todos to list on server given by id
+        updateLists();
+    };
+
     return (
         <Card className={classes.card}>
             <CardContent>
                 <Typography variant="headline" component="h2">
-                    {toDoList.title}
+                    {// Add "Done" to list title if all todos are checked
+                    todos.every(x => x.checked)
+                        ? toDoList.title + " - Done"
+                        : toDoList.title}
                 </Typography>
                 <form onSubmit={handleSubmit} className={classes.form}>
                     {todos.map((todo, index) => (
@@ -89,6 +110,9 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
                                 label="What to do?"
                                 value={todo.name}
                                 onChange={event => {
+                                    /** Resetting waitSave on every click */
+                                    // if (waitSave) clearTimeout(waitSave);
+
                                     setTodos([
                                         // immutable update
                                         ...todos.slice(0, index),
@@ -98,12 +122,10 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
                                         },
                                         ...todos.slice(index + 1)
                                     ]);
+
+                                    /** Waiting 2 seconds then calling updatLists to PUT to server */
+                                    // waitSave = setTimeout(updateLists, 2000);
                                 }}
-                                // style={{
-                                //     textDecoration: todo.checked
-                                //         ? "line-through"
-                                //         : "none"
-                                // }}
                                 className={classes.textField}
                             />
                             <Button
@@ -111,11 +133,17 @@ export const ToDoListForm = ({ toDoList, saveToDoList }) => {
                                 color="secondary"
                                 className={classes.standardSpace}
                                 onClick={() => {
+                                    /** Resetting waitSave on every click */
+                                    // if (waitSave) clearTimeout(waitSave);
+
                                     setTodos([
                                         // immutable delete
                                         ...todos.slice(0, index),
                                         ...todos.slice(index + 1)
                                     ]);
+
+                                    /** Waiting 2 seconds then calling updatLists to PUT to server */
+                                    // waitSave = setTimeout(updateLists, 2000);
                                 }}
                             >
                                 <DeleteIcon />
